@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+# vim:fileencoding=utf-8
+from calibre.web.feeds.news import AutomaticNewsRecipe
+
+from bs4 import BeautifulSoup
+
+class BasicUserRecipe1749760435(AutomaticNewsRecipe):
+    title          = 'A collection of unmitigated pedantry'
+    oldest_article = 150 # days
+    max_articles_per_feed = 100
+    auto_cleanup   = True
+    reverse_article_order = True
+    icon           = 'https://acoup.blog/favicon.ico'
+
+    feeds          = [
+        #('Acoup Older', 'https://acoup.blog/rss?paged=2'), # uncomment to load older articles
+        ('Acoup', 'https://acoup.blog/rss')
+    ]
+
+    def postprocess_html(self, soup, first_fetch):
+        # Find all footnote spans
+        footnote_spans = soup.find_all('span', class_='easy-footnote')
+        import html
+        for i, span in enumerate(footnote_spans):
+            a_tag = span.find('a', title=True)
+            if a_tag and a_tag['title']:
+                note_text = a_tag['title']
+                note_text_unescaped = html.unescape(note_text)
+                # Parse the footnote content to preserve HTML structure
+                temp_soup = BeautifulSoup(note_text_unescaped, 'html.parser')
+                # Remove all <em> tags but keep their content
+                for em in temp_soup.find_all('em'):
+                    em.unwrap()
+                # Get the processed content
+                processed_content = temp_soup.decode_contents()
+                # Wrap the whole note in <i>[ ... ]</i>
+                italic_tag = soup.new_tag('i')
+                # Parse the processed content and append it
+                final_content = BeautifulSoup(f'[{processed_content}]', 'html.parser')
+                for child in list(final_content.children):
+                    italic_tag.append(child)
+                # Debug: print the HTML content of the note
+                print(f"Footnote {i+1}: {italic_tag.decode_contents()}")
+                span.clear()
+                span.append(italic_tag)
+
+        # Remove the subscription widget if present
+        for sub in soup.select('div.jetpack_subscription_widget'):
+            sub.decompose()
+
+        return soup
+    
