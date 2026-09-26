@@ -12,6 +12,17 @@ So this recipe adds a function that:
 
 The resulting ebook is much more readable on readers.
 
+## Update the recipe in Calibre
+On MacOS, quit Calibre and overwrite the stored copy:
+
+```
+cp Acoup.recipe ~/Library/Preferences/calibre/custom_recipes/Acoup_1000.recipe
+```
+
+The `1000` is the recipe id listed in `~/Library/Preferences/calibre/custom_recipes/index.json`. 
+
+Alternatively, in Calibre use *Fetch news* → *Add a custom news source* → *Load recipe from file*.
+
 ## Debug and test
 On MacOS, use the command:
 
