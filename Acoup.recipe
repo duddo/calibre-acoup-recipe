@@ -24,6 +24,17 @@ class AcoupRecipe(AutomaticNewsRecipe):
         for n in range(4, 0, -1)
     ]
 
+    def get_browser(self, *args, **kwargs):
+        # acoup.blog (WordPress.com) serves a JS "Checking your browser"
+        # challenge (HTTP 403) to TLS handshakes without ALPN, which is what
+        # calibre's mechanize sends. Advertising http/1.1, as urllib and curl
+        # do, gets the real content.
+        br = super().get_browser(*args, **kwargs)
+        for handler in br.handlers:
+            if hasattr(handler, 'ssl_context'):
+                handler.ssl_context.set_alpn_protocols(['http/1.1'])
+        return br
+
     def preprocess_raw_html(self, raw_html, url):
         # This must run before auto_cleanup: readability discards
         # span.easy-footnote as an "unlikely candidate" (the class contains
